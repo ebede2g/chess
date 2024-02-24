@@ -21,8 +21,6 @@ with open(f'{lib}current_board.txt', "a") as f:
         for j in range(8):
             f.write(newChessBoard[i][j]+" ")
         f.write("\n")
-# chess = open(f'{lib}current_board.txt').read().splitlines()
-
 
 
 app = dash.Dash(title='Simple Dash Example', prevent_initial_callbacks=True, serve_locally=True)
@@ -42,7 +40,7 @@ def createNewChessboard():
                        'color': 'red',
                        'font-size': '8px'
                        },
-                children=f'__'
+                children=f'{newChessBoard[i][j]}'
             )
             row.append(cell)
         chessboard.append(html.Div(row, className='chess-row'))
@@ -67,10 +65,12 @@ for i in range(8):
 
         )
         def record_move(n_clicks, row=i, col=j):
-            with open(f"{lib}moves.txt", "a") as f:
+            with open("moves.txt", "a") as f:
                 f.write(f"({row}, {col}) - {datetime.datetime.now()}\n")
+            curBoar = open(f'{lib}current_board.txt').read().splitlines()
 
-            return "Move recorded successfully!", "тик"
+            selected_chars = curBoar[row][3 * col:3 * col + 2]
+            return "Move recorded successfully!", ':)'+selected_chars
 
 if __name__ == '__main__':
-    app.run_server(debug=True, port='5912')
+    app.run_server(debug=True, port='5902')
