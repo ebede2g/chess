@@ -13,7 +13,7 @@ def create_chessboard():
         for j in range(8):
             color = "white" if (i + j) % 2 == 0 else "black"
             cell = html.Button(id=f"{i}_{j}",
-                               style={'backgroundColor': color, 'width': '50px', 'height': '50px'})
+            style={'backgroundColor': color, 'width': '50px', 'height': '50px'})
             row.append(cell)
         chessboard.append(html.Div(row, className='chess-row'))
     return chessboard
