@@ -1,6 +1,3 @@
-import threading
-import time
-
 import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output
@@ -22,80 +19,81 @@ with open(f'{lib}current_board.txt', "w") as f:
 with open(f'{lib}current_board.txt', "a") as f:
     for i in range(8):
         for j in range(8):
-            f.write(newChessBoard[i][j]+" ")
+            f.write(newChessBoard[i][j] + " ")
         f.write("\n")
 
+app = dash.Dash(title='Simple Dash Example',prevent_initial_callbacks=True)
 
-app = dash.Dash(title='Simple Dash Example', prevent_initial_callbacks=True, serve_locally=True)
 
-# Створення шахматної дошки
-def createNewChessboard():
+
+def updateChessboard():
     chessboard = []
     with open(f'{lib}current_board.txt', 'r') as file:
-        curBoarReadRow = file.readlines()
+        curBoardReadRow = file.readlines()
 
         for i in range(8):
             row = []
             for j in range(8):
                 color = "white" if (i + j) % 2 == 0 else "black"
-                cell = html.Button(
-                    id=f"{i}_{j}",
+                cell = html.Table(
+                    id=f"{i}//{j}",
                     style={'backgroundColor': color,
-                           'width': '50px',
-                           'height': '50px',
+                           'width': '40px',
+                           'height': '40px',
                            'color': 'red',
-                           'font-size': '8px'
+                           'font-size': '8px',
                            },
-                    children=f'{curBoarReadRow[i][3 * j:3 * j + 2]}'
+                    children=f'{curBoardReadRow[i][3 * j:3 * j + 2]}'
                 )
                 row.append(cell)
-            chessboard.append(html.Div(row, className='chess-row'))
+            chessboard.append(html.Div(row, className='chess-row',style={'display': 'inline-block'}))
         return chessboard
 
 
-def my_loop():
-    while True:
-        app.layout = html.Div(
-            [
-                html.H1("Шахматна дошка"),
-                html.Div(createNewChessboard(), className='chessboard'),
-                html.Plaintext('Запсиувач ходів [пусто]', id="move_history")
-            ]
-        )
-        time.sleep(1000)
 
-loop_thread = threading.Thread(target=my_loop)
-loop_thread.start()
+
+app.layout = html.Div(
+    [
+        html.H1("Шахматна дошка"),
+        html.Div(id="chessboard", children=updateChessboard(), className='chessboard'),
+        html.Plaintext('Записувач ходів [деактивований]', id="move_history"),
+
+        dcc.Interval(id='tick', disabled=True, n_intervals=0)
+    ]
+)
 
 
 
+@app.callback(
+    Output('chessboard', 'children',allow_duplicate=True),
+    Input('tick', 'n_intervals')
+)
+def update_chessboard(n_intervals):
+    print(f"Live upd {n_intervals}")
+    return updateChessboard()
+
+
+@app.callback(
+    Output("move_history", "children",),
+    Output("chessboard", "children"),
+    Output('tick','n_intervals'),
+    Input("chessboard", "n_clicks"),
+)
+def record_move(n_clicks):
+    return f"Move recorded successfully!", updateChessboard() , 1
 
 
 
+# @app.callback(
+#     Output("move_history", "children"),
+#     Output('chessboard', 'children'),
+#     Input("00", "n_clicks"),
+# )
+# def record_move(n_clicks):
+#    return "Move recorded successfully!", updateChessboard()
 
-for i in range(8):
-    for j in range(8):
-        @app.callback(
-            Output("move_history", "children", allow_duplicate=1),
-            Output(f"{i}_{j}", "children"),
-            Input(f"{i}_{j}", "n_clicks"),
 
-        )
-        def record_move(n_clicks, row=i, col=j):
-            with open("moves.txt", "a") as moves:
-                moves.write(f"({row}, {col}) - {datetime.datetime.now()}\n")
-
-            with open(f'{lib}current_board.txt', 'r') as file:
-                curBoarReadRow = file.readlines()
-                curBoarReadRow[row] = curBoarReadRow[row][:3 * col] + ":) " + curBoarReadRow[row][3 * col + 3:]
-                with open(f'{lib}current_board.txt', 'w') as file:
-                    file.writelines(curBoarReadRow)
-                selected_chars = curBoarReadRow[row][3 * col:3 * col + 2]
-                if(selected_chars==':) '):
-                    selected_chars=':P'
-
-            return "Move recorded successfully!", f"{selected_chars}"
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True, port='1984')
+    app.run_server(debug=True, host='0.0.0.0', port='2133')
